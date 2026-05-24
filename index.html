@@ -3,26 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A Message For You</title>
+  <title>Super Secret Invitation</title>
+  
+  <!-- Pixel Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
-    /* Centers everything on the screen */
     body {
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      background-color: #f4f4f9;
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      overflow: hidden; /* Prevents scrollbars during animations */
+      overflow: hidden; 
+      background-image: url('https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=2000&auto=format&fit=crop');
+      background-size: cover;       
+      background-position: center;  
+      background-repeat: no-repeat; 
     }
 
-    /* --- THE DIMMING OVERLAY --- */
     .overlay {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background-color: rgba(0, 0, 0, 0.185);
+      background-color: rgba(0, 0, 0, 0.158);
       opacity: 0; 
       pointer-events: none; 
       transition: opacity 0.6s ease-in-out;
@@ -34,184 +40,229 @@
       cursor: pointer;
     }
 
-    /* --- THE MAIL CONTAINER --- */
     .mail-container {
       position: relative;
       width: 300px;
       height: 200px;
       cursor: pointer;
-      z-index: 11; /* Sits above the overlay */
+      z-index: 11; 
     }
 
-    /* 1. Back of the envelope */
+    /* 1. Stardew Envelope Back */
     .envelope-back {
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background-color: #c0392b; 
+      background-color: #a86f45; /* Darker parchment brown */
       border-radius: 0 0 10px 10px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
       z-index: 1;
     }
 
-    /* 2. The Card */
+    /* 2. The Stardew Letter (Your image goes here) */
     .card {
       position: absolute;
       top: 10px; left: 10px;
       width: 280px; height: 180px;
-      background-color: #fffcf2; 
-      border-radius: 5px;
-      padding: 20px;
+      background-color: #f7d8a5; /* Fallback paper color */
+      background-image: url('sv_letter.png'); /* The SV pixelated letter you cropped */
+      background-size: 100% 100%;
+      image-rendering: pixelated; 
+      padding: 30px;
       box-sizing: border-box;
       text-align: center;
-      z-index: 2; /* Sits between back and front of envelope */
+      z-index: 2; 
+      font-family: 'Pixelify Sans', sans-serif;
+      color: #3b170a;
+      line-height: 1.4;
+      text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.3);
     }
+    .card h2 { font-weight: 700; margin-top: 0; font-size: 24px; margin-bottom: 10px; }
+    .card p { font-size: 16px; margin: 0; }
 
-    /* 3. Front of the envelope (holds the folds) */
+    /* 3. Stardew Envelope Front Folds */
     .envelope-front {
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
       z-index: 3;
-      pointer-events: none; /* Lets you click through to the container */
+      pointer-events: none; 
     }
     .fold-left {
-      position: absolute;
-      top: 0; left: 0;
-      border-top: 100px solid transparent;
-      border-bottom: 100px solid transparent;
-      border-left: 150px solid #d35400;
+      position: absolute; top: 0; left: 0;
+      border-top: 100px solid transparent; border-bottom: 100px solid transparent;
+      border-left: 150px solid #c28455;
     }
     .fold-right {
-      position: absolute;
-      top: 0; right: 0;
-      border-top: 100px solid transparent;
-      border-bottom: 100px solid transparent;
-      border-right: 150px solid #d35400;
+      position: absolute; top: 0; right: 0;
+      border-top: 100px solid transparent; border-bottom: 100px solid transparent;
+      border-right: 150px solid #c28455;
     }
     .fold-bottom {
-      position: absolute;
-      bottom: 0; left: 0;
-      border-left: 150px solid transparent;
-      border-right: 150px solid transparent;
-      border-bottom: 100px solid #e74c3c;
+      position: absolute; bottom: 0; left: 0;
+      border-left: 150px solid transparent; border-right: 150px solid transparent;
+      border-bottom: 100px solid #d49563;
     }
 
-    /* 4. The Flap */
+    /* 4. Stardew Envelope Flap & Wax Seal */
     .flap {
       position: absolute;
       top: 0; left: 0;
       border-left: 150px solid transparent;
       border-right: 150px solid transparent;
-      border-top: 110px solid #e74c3c; 
+      border-top: 110px solid #e0a473; 
       transform-origin: top;
       z-index: 4; 
       pointer-events: none;
     }
+    
+    /* The Red Wax Seal */
+    .wax-seal {
+      position: absolute;
+      top: 90px;
+      left: 130px;
+      width: 40px;
+      height: 40px;
+      background-color: #a62828;
+      border-radius: 50%;
+      z-index: 5;
+      pointer-events: none;
+      transition: opacity 0.2s ease-in-out;
+    }
 
     /* --- ANIMATION RULES --- */
-    /* Everything takes exactly 0.6 seconds to move so it chains together smoothly */
     .card, .flap, .envelope-back, .envelope-front {
       transition: transform 0.6s ease-in-out, z-index 0s 0.3s, box-shadow 0.6s ease-in-out;
     }
 
-    /* STEP 1: Flap Opens */
+    /* Step 1: Flap Opens & Seal Breaks */
     .mail-container.flap-open .flap {
       transform: rotateX(180deg);
-      z-index: 1; /* Flap drops behind the card so it can slide out */
+      z-index: 1; 
+    }
+    .mail-container.flap-open .wax-seal {
+      opacity: 0; /* Seal vanishes as if broken */
     }
 
-    /* STEP 2: Card Slides Up */
+    /* Step 2: Letter Slides Up */
     .mail-container.card-slide .card {
       transform: translateY(-120px); 
     }
 
-    /* STEP 3: Envelope Drops & Card Zooms */
+    /* Step 3: Envelope Drops Down & Letter Zooms In */
     .mail-container.zoom-in .envelope-back,
     .mail-container.zoom-in .envelope-front {
-      transform: translateY(100vh); /* Drops it entirely off the bottom of the screen */
+      transform: translateY(100vh); 
     }
     .mail-container.zoom-in .flap {
-      transform: translateY(100vh) rotateX(180deg); /* Maintains the open rotation while dropping */
+      transform: translateY(100vh) rotateX(180deg); 
     }
     .mail-container.zoom-in .card {
-      transform: translateY(0) scale(1.6); /* Resets the Y position to center it, and zooms */
+      transform: translateY(0) scale(1.6); 
       box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-      z-index: 15; /* Ensures the card pops over the dim overlay */
+      z-index: 15; 
       cursor: default;
     }
 
+    .layout {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      gap: 150px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Pixelify Sans', sans-serif;
+      color: #af9818;
+    }
+    #test-title {
+      transition: opacity 0.4s ease-in-out;
+    }
+
+    #test-title.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
 
-  <!-- The Dim Background -->
+  
   <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <h1 id="test-title">You've Got Mail!</h1>
+    <div class="mail-container" id="mail">
+      
+      <!-- The physical envelope back -->
+      <div class="envelope-back"></div>
+      
+      <!-- The Letter -->
+      <div class="card" id="card">
+        <h2>Hello!</h2>
+        <p>I have a wonderful surprise for you. Meet me behind the saloon after dark.</p>
+        <p>- Grandpa</p>
+      </div>
+      
+      <!-- The physical envelope front and flap -->
+      <div class="envelope-front">
+        <div class="fold-left"></div>
+        <div class="fold-right"></div>
+        <div class="fold-bottom"></div>
+      </div>
+      <div class="flap"></div>
+      
+      <!-- The Wax Seal -->
+      <div class="wax-seal"></div>
 
-  <!-- The Mail -->
-  <div class="mail-container" id="mail">
-    <div class="envelope-back"></div>
-    
-    <!-- Your Custom Message -->
-    <div class="card" id="card">
-      <h2>Hello!</h2>
-      <p>This is a secret message just for you. You can change this text to say whatever you like!</p>
     </div>
-    
-    <div class="envelope-front">
-      <div class="fold-left"></div>
-      <div class="fold-right"></div>
-      <div class="fold-bottom"></div>
-    </div>
-    <div class="flap"></div>
   </div>
+  
 
-  <!-- The Sequence Logic -->
   <script>
     const mail = document.getElementById('mail');
     const overlay = document.getElementById('overlay');
+    const testTitle = document.getElementById('test-title'); // 1. Select the title
     
-    let isAnimating = false; // Locks clicks while the animation is running
+    let isAnimating = false; 
     let isOpen = false;
 
-    // Opening Sequence
     mail.addEventListener('click', () => {
       if (isOpen || isAnimating) return;
       isAnimating = true;
       isOpen = true;
 
-      // Step 1: Open the flap
+      // 2. Hide the title when opening
+      testTitle.classList.add('hidden'); 
+
       mail.classList.add('flap-open');
 
-      // Step 2: Slide the card up after 600ms (when flap finishes)
       setTimeout(() => {
         mail.classList.add('card-slide');
         
-        // Step 3: Zoom card and drop envelope after another 600ms
         setTimeout(() => {
           mail.classList.add('zoom-in');
           overlay.classList.add('active');
-          isAnimating = false; // Unlocks clicks
+          isAnimating = false; 
         }, 600);
 
       }, 600); 
     });
 
-    // Closing Sequence (Plays in exact reverse)
     overlay.addEventListener('click', () => {
       if (!isOpen || isAnimating) return;
       isAnimating = true;
       isOpen = false;
 
-      // Reverse Step 3: Unzoom card and bring envelope back up
+      // 3. Show the title when closing
+      testTitle.classList.remove('hidden');
+
       mail.classList.remove('zoom-in');
       overlay.classList.remove('active');
 
-      // Reverse Step 2: Slide card back down into envelope
       setTimeout(() => {
         mail.classList.remove('card-slide');
 
-        // Reverse Step 1: Close the flap
         setTimeout(() => {
           mail.classList.remove('flap-open');
           isAnimating = false;
