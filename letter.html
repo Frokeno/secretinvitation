@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Message For You</title>
+  <style>
+    /* Centers everything on the screen */
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f4f4f9;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden; /* Prevents scrollbars during animations */
+    }
+
+    /* --- THE DIMMING OVERLAY --- */
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.185);
+      opacity: 0; 
+      pointer-events: none; 
+      transition: opacity 0.6s ease-in-out;
+      z-index: 10;
+    }
+    .overlay.active {
+      opacity: 1;
+      pointer-events: auto; 
+      cursor: pointer;
+    }
+
+    /* --- THE MAIL CONTAINER --- */
+    .mail-container {
+      position: relative;
+      width: 300px;
+      height: 200px;
+      cursor: pointer;
+      z-index: 11; /* Sits above the overlay */
+    }
+
+    /* 1. Back of the envelope */
+    .envelope-back {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: #c0392b; 
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      z-index: 1;
+    }
+
+    /* 2. The Card */
+    .card {
+      position: absolute;
+      top: 10px; left: 10px;
+      width: 280px; height: 180px;
+      background-color: #fffcf2; 
+      border-radius: 5px;
+      padding: 20px;
+      box-sizing: border-box;
+      text-align: center;
+      z-index: 2; /* Sits between back and front of envelope */
+    }
+
+    /* 3. Front of the envelope (holds the folds) */
+    .envelope-front {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 3;
+      pointer-events: none; /* Lets you click through to the container */
+    }
+    .fold-left {
+      position: absolute;
+      top: 0; left: 0;
+      border-top: 100px solid transparent;
+      border-bottom: 100px solid transparent;
+      border-left: 150px solid #d35400;
+    }
+    .fold-right {
+      position: absolute;
+      top: 0; right: 0;
+      border-top: 100px solid transparent;
+      border-bottom: 100px solid transparent;
+      border-right: 150px solid #d35400;
+    }
+    .fold-bottom {
+      position: absolute;
+      bottom: 0; left: 0;
+      border-left: 150px solid transparent;
+      border-right: 150px solid transparent;
+      border-bottom: 100px solid #e74c3c;
+    }
+
+    /* 4. The Flap */
+    .flap {
+      position: absolute;
+      top: 0; left: 0;
+      border-left: 150px solid transparent;
+      border-right: 150px solid transparent;
+      border-top: 110px solid #e74c3c; 
+      transform-origin: top;
+      z-index: 4; 
+      pointer-events: none;
+    }
+
+    /* --- ANIMATION RULES --- */
+    /* Everything takes exactly 0.6 seconds to move so it chains together smoothly */
+    .card, .flap, .envelope-back, .envelope-front {
+      transition: transform 0.6s ease-in-out, z-index 0s 0.3s, box-shadow 0.6s ease-in-out;
+    }
+
+    /* STEP 1: Flap Opens */
+    .mail-container.flap-open .flap {
+      transform: rotateX(180deg);
+      z-index: 1; /* Flap drops behind the card so it can slide out */
+    }
+
+    /* STEP 2: Card Slides Up */
+    .mail-container.card-slide .card {
+      transform: translateY(-120px); 
+    }
+
+    /* STEP 3: Envelope Drops & Card Zooms */
+    .mail-container.zoom-in .envelope-back,
+    .mail-container.zoom-in .envelope-front {
+      transform: translateY(100vh); /* Drops it entirely off the bottom of the screen */
+    }
+    .mail-container.zoom-in .flap {
+      transform: translateY(100vh) rotateX(180deg); /* Maintains the open rotation while dropping */
+    }
+    .mail-container.zoom-in .card {
+      transform: translateY(0) scale(1.6); /* Resets the Y position to center it, and zooms */
+      box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+      z-index: 15; /* Ensures the card pops over the dim overlay */
+      cursor: default;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- The Dim Background -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- The Mail -->
+  <div class="mail-container" id="mail">
+    <div class="envelope-back"></div>
+    
+    <!-- Your Custom Message -->
+    <div class="card" id="card">
+      <h2>Hello!</h2>
+      <p>This is a secret message just for you. You can change this text to say whatever you like!</p>
+    </div>
+    
+    <div class="envelope-front">
+      <div class="fold-left"></div>
+      <div class="fold-right"></div>
+      <div class="fold-bottom"></div>
+    </div>
+    <div class="flap"></div>
+  </div>
+
+  <!-- The Sequence Logic -->
+  <script>
+    const mail = document.getElementById('mail');
+    const overlay = document.getElementById('overlay');
+    
+    let isAnimating = false; // Locks clicks while the animation is running
+    let isOpen = false;
+
+    // Opening Sequence
+    mail.addEventListener('click', () => {
+      if (isOpen || isAnimating) return;
+      isAnimating = true;
+      isOpen = true;
+
+      // Step 1: Open the flap
+      mail.classList.add('flap-open');
+
+      // Step 2: Slide the card up after 600ms (when flap finishes)
+      setTimeout(() => {
+        mail.classList.add('card-slide');
+        
+        // Step 3: Zoom card and drop envelope after another 600ms
+        setTimeout(() => {
+          mail.classList.add('zoom-in');
+          overlay.classList.add('active');
+          isAnimating = false; // Unlocks clicks
+        }, 600);
+
+      }, 600); 
+    });
+
+    // Closing Sequence (Plays in exact reverse)
+    overlay.addEventListener('click', () => {
+      if (!isOpen || isAnimating) return;
+      isAnimating = true;
+      isOpen = false;
+
+      // Reverse Step 3: Unzoom card and bring envelope back up
+      mail.classList.remove('zoom-in');
+      overlay.classList.remove('active');
+
+      // Reverse Step 2: Slide card back down into envelope
+      setTimeout(() => {
+        mail.classList.remove('card-slide');
+
+        // Reverse Step 1: Close the flap
+        setTimeout(() => {
+          mail.classList.remove('flap-open');
+          isAnimating = false;
+        }, 600);
+
+      }, 600);
+    });
+  </script>
+
+</body>
+</html>
